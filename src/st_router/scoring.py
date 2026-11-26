@@ -1,5 +1,6 @@
 import pandas as pd
 from statsmodels.stats.contingency_tables import mcnemar
+import re
 
 VALID_SET = {
     "cd", "ls", "ll", "pwd", "exit", "cat", "cp", "head", "find", "chmod", "nano", "man",
@@ -58,6 +59,13 @@ def label_rows(df: pd.DataFrame) -> pd.DataFrame:
 
 def command_name(s: pd.Series) -> pd.Series:
     return s.str.strip().str.replace(r"^sudo\s+", "", regex=True).str.split().str[0]
+
+def build_prefix(s: pd.Series) -> pd.DataFrame:
+    parts = s.str.extract(r"^(?P<sudo>sudo\s+)?(?P<cmd>\S+)\s*(?P<rest>.*)")
+    parts["sudo"] = parts["sudo"].fillna("")
+    parts["prefix"] = parts["sudo"] + parts["cmd"] + " "
+    return parts[["prefix", "rest"]]
+
 
 def score(pred: pd.Series, target: pd.Series):
     """Score by matching on the full string and on the command name, returning both boolean series"""
